@@ -3,6 +3,11 @@ const { Schema, model } = mongoose
 
 const normalNote = new Schema(
 	{
+		title: {
+			type: String,
+			required: [true, 'Please add a text value'],
+		},
+
 		note: {
 			type: String,
 			required: [true, 'Please add a text value'],
