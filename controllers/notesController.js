@@ -5,24 +5,56 @@ const Note = require('../models/noteModel')
 // @route POST /api/notes
 // @access PUBLIC
 const createNote = asyncHandler(async (req, res) => {
-	if (!req.body.note) {
-		res.status(400)
-		throw new Error('Please add a note field')
+
+	let note = 'New Note'
+
+	let title = note
+
+	if (req.body.note) {
+		note = req.body.note
+
+		if (req.body.note.length > 25) {
+			title = note.slice(0, 20) + '. . .'
+		}
+
 	}
 
-	const note = await Note.create({
-		note: req.body.note,
+
+	const newNote = await Note.create({
+		title,
+		note,
 		type: 'note',
 	})
 
-	res.status(201).json({ note, message: 'New Note Created!' })
+	res.status(201).json({ newNote, message: 'New Note Created!' })
 })
 
 // @desc Get Notes
 // @route GET /api/notes
 // @access PUBLIC
 const getNotes = asyncHandler(async (req, res) => {
-	const notes = await Note.find().select({ note: 1, _id: 1, createdAt: 1, updatedAt: 1 }).lean()
+	let notes
+	let limit = 10
+	const lastNote = req.query._lastNote
+
+	if (req?.query?._limit) {
+		limit = parseInt(req?.query?._limit)
+	}
+
+	notes = await Note.find()
+		.sort({ updatedAt: 'desc' })
+		.limit(limit)
+		.select({ title: 1, note: 1, _id: 1, updatedAt: 1 })
+		.lean()
+
+	if (lastNote) {
+		notes = await Note.find({ updatedAt: { $lt: lastNote } })
+			.sort({ updatedAt: 'desc' })
+			.limit(limit)
+			.select({ title: 1, note: 1, _id: 1, updatedAt: 1 })
+			.lean()
+	}
+
 	res.status(200).json(notes)
 })
 
@@ -31,7 +63,7 @@ const getNotes = asyncHandler(async (req, res) => {
 // @access PUBLIC
 const getNoteById = asyncHandler(async (req, res) => {
 	const note = await Note.findById(req.params.id)
-		.select({ note: 1, _id: 1, createdAt: 1, updatedAt: 1 })
+		.select({ title: 1, note: 1, _id: 1, updatedAt: 1 })
 		.lean()
 
 	res.status(200).json(note)
@@ -50,9 +82,17 @@ const updateNote = asyncHandler(async (req, res) => {
 	}
 
 	try {
+		req.body.title = req.body.note
+
+		if (req.body.note.length > 25) {
+			req.body.title = req.body.note.slice(0, 20) + '. . .'
+		}
+
 		const updatedNote = await Note.findByIdAndUpdate(req.params.id, req.body, {
 			new: true,
-		}).lean()
+		})
+			.select({ title: 1, note: 1, _id: 1, updatedAt: 1 })
+			.lean()
 
 		res.status(200).json({
 			updatedNote,
