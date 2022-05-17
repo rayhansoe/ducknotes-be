@@ -27,7 +27,7 @@ app.use('/api/isready', require('./routes/checkRoute'))
 app.use('/api/notes', require('./routes/noteRoutes'))
 
 if (process.env.NODE_ENV === 'production') {
-	app.get('/', (req, res) => res.redirect(301, 'http://goalsapp-one.vercel.app'))
+	app.get('/', (req, res) => res.redirect(301, 'https://baru-duck.vercel.app/notes'))
 } else {
 	app.get('/', (req, res) => res.send('Please set to production'))
 }
